@@ -1,27 +1,21 @@
 import { useEffect, useState } from "react";
 import Navbar from "./components/Navbar";
-import Sidebar from "./components/Sidebar";
 import CurrentWeather from "./components/CurrentWeather";
 import WeatherStat from "./components/WeatherStat";
 import WeeklyWeather from "./components/WeeklyWeather";
 import Loading from "./components/Loading";
 import ErrorMessage from "./components/ErrorMessage";
-import { getWeatherData } from "./API/WeatherAPI";
+import History from "./components/History";
+import { getWeatherData, getWeatherByLocation } from "./API/WeatherAPI";
 
 function App() {
     const [weather, setWeather] = useState(null);
     const [forecast, setForecast] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [history, setHistory] = useState([]);
 
     const fetchWeather = async (city) => {
-        // Input empty ho to sab clear kar do
-        if (!city.trim()) {
-            setWeather(null);
-            setForecast([]);
-            setError("");
-            return;
-        }
 
         try {
             setLoading(true);
@@ -31,32 +25,67 @@ function App() {
 
             setWeather(data.current);
             setForecast(data.forecast);
+
+            setHistory((prev) => {
+                if (prev.includes(data.current.name))
+                    return prev;
+                return [data.current.name, ...prev];
+            })
+
         } catch (err) {
             setError("City not found");
-            setWeather(null);
-            setForecast([]);
+
         } finally {
             setLoading(false);
         }
     };
+    // history saved
+    useEffect(() => {
+        localStorage.setItem(
+            "history",
+            JSON.stringify(history)
+        );
+    }, [history]);
+    //history load
+    useEffect(() => {
+        const savedHistory =
+            JSON.parse(localStorage.getItem("history")) || [];
+
+        setHistory(savedHistory);
+    }, []);
+    // current location
     useEffect(() => {
         navigator.geolocation.getCurrentPosition(
             async (position) => {
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
+                try {
+                    setLoading(true);
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
 
-                console.log(lat, lon);
+                    const data = await getWeatherByLocation(lat, lon)
+                    setWeather(data.current);
+                    setForecast(data.forecast);
+
+                    
+        setHistory((prev) => {
+          if (prev.includes(data.current.name)) return prev;
+          return [data.current.name, ...prev];
+        });
+
+                } catch {
+                    setError("Unable to get Weather");
+                } finally {
+                    setLoading(false);
+                }
             },
-            (error) => {
-                console.log(error.message);
+            () => {
+                setError("Location Permission denied")
             }
         );
     }, []);
 
     return (
-        <div className="flex">
-            <Sidebar />
-
+        
             <div className="flex-1 ">
                 <Navbar onSearch={fetchWeather} />
 
@@ -66,7 +95,10 @@ function App() {
                     {error && (
                         <ErrorMessage message={error} />
                     )}
-
+                    <History
+                        history={history}
+                        onSelect={fetchWeather}
+                    />
                     {weather && !loading && (
                         <>
                             <CurrentWeather weather={weather} />
@@ -76,7 +108,7 @@ function App() {
                     )}
                 </div>
             </div>
-        </div>
+
     );
 }
 

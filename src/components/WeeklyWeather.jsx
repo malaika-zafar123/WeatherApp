@@ -1,67 +1,44 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faSun,
-    faCloud,
-    faCloudRain,
-} from "@fortawesome/free-solid-svg-icons";
 function WeeklyWeather({ forecast }) {
+  return (
+    <div className="border p-4 rounded-2xl text-white">
+      <h2 className="text-3xl mb-4">
+        Weekly Weather
+      </h2>
 
-const getWeatherIcon = (condition) => {
-  switch (condition) {
-    case "Clear":
-      return faSun;
-    case "Clouds":
-      return faCloud;
-    case "Rain":
-      return faCloudRain;
-    default:
-      return faSun;
-  }
-};
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
 
-const getWeatherColor = (condition) => {
-  switch (condition) {
-    case "Clear":
-      return "text-yellow-400";
+        {forecast.slice(0, 7).map((item, index) => {
+          const [date, time] = item.dt_txt.split(" ");
 
-    case "Clouds":
-      return "text-gray-300";
+          return (
+            <div
+              key={index}
+              className="border p-4 rounded-xl text-center"
+            >
+              <img
+                src={`https://openweathermap.org/img/wn/${item.weather[0].icon}@4x.png`}
+                alt="weather"
+                className="w-20 h-20 mx-auto"
+              />
 
-    case "Rain":
-      return "text-blue-400";
+              <p className="font-semibold">{date}</p>
 
-    default:
-      return "text-yellow-400";
-  }
-};
-    return (
-        <div className="border p-4 rounded-2xl text-white">
-            <h2 className="text-3xl mb-4">
-                Weekly Weather
-            </h2>
+              <p className="text-sm text-gray-300">
+                {time}
+              </p>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-                {forecast.slice(0, 7).map((item, index) => (
-                    <div
-                        key={index}
-                        className="border p-4 rounded-xl text-center"
-                    >
-                        <FontAwesomeIcon
-                            icon={getWeatherIcon(item.weather[0].main)}
-                            className={`text-4xl mb-2 ${getWeatherColor(
-                                item.weather[0].main
-                            )}`}
+              <p className="text-2xl font-bold">
+                {Math.round(item.main.temp)}°
+              </p>
 
-                        />
-
-                        <p>{item.dt_txt.split(" ")[0]}</p>
-                        <p>{Math.round(item.main.temp)}°</p>
-                        <p>{item.weather[0].main}</p>
-                    </div>
-                ))}
+              <p>{item.weather[0].main}</p>
             </div>
-        </div>
-    );
+          );
+        })}
+
+      </div>
+    </div>
+  );
 }
 
 export default WeeklyWeather;
